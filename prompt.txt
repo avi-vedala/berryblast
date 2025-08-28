@@ -1,0 +1,11 @@
+Use the provided link to extract the following information from the job listing:
+1. Company
+2. Job Title
+3. Location
+4. Job Functions
+
+Do not paraphrase any information or data. Be as accurate as possible. Match the appropriate information with the respective columns in the Excel file.
+Add today's date as the application date.
+Also make the first column arbitrarily "Applied".
+For the Job Functions, copy and paste whatever it says on the application page under "Job Functions", "Role Information", or similar sections. I am looking for what the day-to-day tasks are.
+Also include the pasted URL under the URL column of the spreadsheet.

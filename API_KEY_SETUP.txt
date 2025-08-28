@@ -1,0 +1,43 @@
+📋 API KEY SETUP INSTRUCTIONS
+================================
+
+🚀 QUICK SETUP (Recommended):
+1. Open backend.py in your editor
+2. Find line 19: DEFAULT_API_KEY = "YOUR_GEMINI_API_KEY_HERE"
+3. Replace "YOUR_GEMINI_API_KEY_HERE" with your actual API key
+4. Save the file
+5. Restart the Streamlit app
+
+Example:
+DEFAULT_API_KEY = "AIzaSyBc123YourActualAPIKey456Here"
+
+🔑 GET YOUR API KEY:
+1. Go to https://makersuite.google.com/app/apikey
+2. Sign in with your Google account
+3. Click "Create API Key"
+4. Copy the generated key
+
+🌍 ALTERNATIVE - ENVIRONMENT VARIABLE:
+If you prefer not to store the key in code:
+
+Windows PowerShell:
+$env:GEMINI_API_KEY = "your_api_key_here"
+
+Windows Command Prompt:
+set GEMINI_API_KEY=your_api_key_here
+
+Linux/Mac:
+export GEMINI_API_KEY="your_api_key_here"
+
+🔄 PRIORITY ORDER:
+The app checks for API keys in this order:
+1. Manual input in Streamlit sidebar (highest priority)
+2. DEFAULT_API_KEY in backend.py
+3. GEMINI_API_KEY environment variable
+4. GOOGLE_API_KEY environment variable (lowest priority)
+
+💡 TIPS:
+- The default key method is most convenient for personal use
+- Environment variables are better for shared/production environments
+- You can always override with manual input in the sidebar
+- Restart the app after changing the default key in backend.py
