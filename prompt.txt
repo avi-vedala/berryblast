@@ -9,3 +9,4 @@ Add today's date as the application date.
 Also make the first column arbitrarily "Applied".
 For the Job Functions, copy and paste whatever it says on the application page under "Job Functions", "Role Information", or similar sections. I am looking for what the day-to-day tasks are.
 Also include the pasted URL under the URL column of the spreadsheet.
+Do not cut any data off. Include as much information as possible in the Job Functions section.

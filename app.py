@@ -262,21 +262,136 @@ with tab2:
     except Exception as e:
         st.error(f"❌ Error reading Excel file: {str(e)}")
         st.info("Please check if the file is a valid Excel file and not corrupted.")
+    
+    # Backup functionality (moved to bottom)
+    st.markdown("---")
+    st.subheader("💾 Backup & Import")
+    backup_col1, backup_col2 = st.columns(2)
+    
+    with backup_col1:
+        st.write("**Export Backup:**")
+        if st.button("📤 Export as Excel", type="secondary"):
+            try:
+                if os.path.exists(excel_file):
+                    df_export = pd.read_excel(excel_file)
+                    if not df_export.empty:
+                        # Create a download link for the Excel file
+                        from datetime import datetime
+                        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+                        backup_filename = f"job_applications_backup_{timestamp}.xlsx"
+                        
+                        # Convert to Excel bytes
+                        from io import BytesIO
+                        buffer = BytesIO()
+                        df_export.to_excel(buffer, index=False)
+                        buffer.seek(0)
+                        
+                        st.download_button(
+                            label="⬇️ Download Backup",
+                            data=buffer.getvalue(),
+                            file_name=backup_filename,
+                            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                            type="primary"
+                        )
+                        st.success(f"✅ Backup ready for download: {backup_filename}")
+                    else:
+                        st.warning("⚠️ No data to export")
+                else:
+                    st.warning("⚠️ No applications file found")
+            except Exception as e:
+                st.error(f"❌ Export failed: {str(e)}")
+    
+    with backup_col2:
+        st.write("**Import Backup:**")
+        uploaded_file = st.file_uploader(
+            "Choose backup file",
+            type=['xlsx', 'csv'],
+            help="Upload a .xlsx or .csv file to import applications"
+        )
+        
+        if uploaded_file is not None:
+            try:
+                # Determine file type and read accordingly
+                if uploaded_file.name.endswith('.xlsx'):
+                    df_import = pd.read_excel(uploaded_file)
+                elif uploaded_file.name.endswith('.csv'):
+                    df_import = pd.read_csv(uploaded_file)
+                
+                # Show preview
+                st.write("**Preview of imported data:**")
+                st.dataframe(df_import.head(), use_container_width=True)
+                st.info(f"📊 Found {len(df_import)} rows and {len(df_import.columns)} columns")
+                
+                # Import options
+                import_col1, import_col2 = st.columns(2)
+                
+                with import_col1:
+                    if st.button("🔄 Replace Current Data", type="primary", 
+                                help="This will completely replace your current applications"):
+                        try:
+                            df_import.to_excel(excel_file, index=False)
+                            st.success(f"✅ Successfully imported {len(df_import)} applications!")
+                            st.success("Data has been replaced. Refresh the page to see changes.")
+                        except Exception as e:
+                            st.error(f"❌ Import failed: {str(e)}")
+                
+                with import_col2:
+                    if st.button("➕ Append to Current Data", type="secondary",
+                                help="This will add the imported data to your existing applications"):
+                        try:
+                            if os.path.exists(excel_file):
+                                df_existing = pd.read_excel(excel_file)
+                                df_combined = pd.concat([df_existing, df_import], ignore_index=True)
+                            else:
+                                df_combined = df_import
+                            
+                            df_combined.to_excel(excel_file, index=False)
+                            st.success(f"✅ Successfully appended {len(df_import)} applications!")
+                            st.success("Data has been appended. Refresh the page to see changes.")
+                        except Exception as e:
+                            st.error(f"❌ Append failed: {str(e)}")
+                
+            except Exception as e:
+                st.error(f"❌ Failed to read file: {str(e)}")
+                st.info("💡 Please make sure the file is a valid Excel (.xlsx) or CSV (.csv) file")
 
 with tab3:
     st.header("🔍 Row Details")
     
-    # Row number input
-    # Check max rows if Excel file exists
-    max_row = 1
-    if os.path.exists(excel_file):
-        try:
-            temp_df = pd.read_excel(excel_file)
-            max_row = len(temp_df) if not temp_df.empty else 1
-        except:
-            max_row = 1
+    # Row number input (removed navigation arrows)
+    col1, col2 = st.columns([2, 2])
     
-    row_number = st.number_input("Enter row number:", min_value=1, max_value=max_row, value=1)
+    with col1:
+        if 'current_row' not in st.session_state:
+            st.session_state.current_row = 1
+        
+        # Check max rows if Excel file exists
+        max_row = 1
+        if os.path.exists(excel_file):
+            try:
+                temp_df = pd.read_excel(excel_file)
+                max_row = len(temp_df) if not temp_df.empty else 1
+            except:
+                max_row = 1
+        
+        # Update max_row in session state if current row exceeds it
+        if st.session_state.current_row > max_row:
+            st.session_state.current_row = max_row
+        
+        row_number = st.number_input(
+            "Row:", 
+            min_value=1, 
+            max_value=max_row, 
+            value=st.session_state.current_row, 
+            key="row_input",
+            on_change=lambda: setattr(st.session_state, 'current_row', st.session_state.row_input)
+        )
+        
+        # Update session state when number input changes
+        st.session_state.current_row = row_number
+    
+    # Use the session state value for the actual row number
+    row_number = st.session_state.current_row
     
     try:
         if os.path.exists(excel_file):
@@ -294,6 +409,7 @@ with tab3:
                            "💼" if "position" in col.lower() or "title" in col.lower() else \
                            "📍" if "location" in col.lower() else \
                            "⚡" if "function" in col.lower() else \
+                           "🆔" if "job_id" in col.lower() or "id" in col.lower() else \
                            "📅" if "date" in col.lower() else \
                            "🔗" if "url" in col.lower() else \
                            "📊" if "status" in col.lower() else \
@@ -346,7 +462,7 @@ with tab3:
                 
                 # Other actions
                 st.write("**Other Actions:**")
-                col5, col6 = st.columns(2)
+                col5, col6, col7, col8 = st.columns(4)
                 
                 with col5:
                     if st.button("📋 Copy Details", key=f"copy_{row_number}"):
@@ -354,7 +470,7 @@ with tab3:
                         st.text_area("Row Details (copy this):", details, height=200, key=f"details_{row_number}")
                 
                 with col6:
-                    # Delete button with confirmation
+                    # Delete button with confirmation (aligned with interviewed button above)
                     if st.button("🗑️ Delete Row", key=f"delete_{row_number}", type="secondary"):
                         # Use session state to handle confirmation
                         st.session_state[f"confirm_delete_{row_number}"] = True
@@ -370,6 +486,8 @@ with tab3:
                             if result["success"]:
                                 st.success(result["message"])
                                 st.session_state[f"confirm_delete_{row_number}"] = False
+                                # Reset to row 1 after deletion
+                                st.session_state.current_row = 1
                                 st.rerun()
                             else:
                                 st.error(result["message"])
